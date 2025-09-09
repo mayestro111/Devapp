@@ -54,7 +54,6 @@ export function CaseViewer({
 
   const handleComplete = () => {
     onComplete(medicalCase.id);
-    setShowResults(true);
   };
 
   const getDifficultyColor = (difficulty: string) => {
