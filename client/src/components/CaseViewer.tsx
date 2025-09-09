@@ -16,7 +16,6 @@ export function CaseViewer({
   const [selectedAnswers, setSelectedAnswers] = useState<{
     [key: string]: number;
   }>({});
-  const [showResults, setShowResults] = useState(false);
 
   const steps = [
     'presentation',

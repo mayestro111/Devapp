@@ -1,8 +1,8 @@
-import { Specialty, sampleCases } from '../data/medicalData';
+import { Specialty, MedicalCase, sampleCases } from '../data/medicalData';
 
 interface CasesListProps {
   specialty: Specialty;
-  onCaseSelect: (medicalCase: any) => void;
+  onCaseSelect: (medicalCase: MedicalCase) => void;
   completedCases: Set<string>;
 }
 
