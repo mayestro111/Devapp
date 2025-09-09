@@ -1,4 +1,8 @@
-import { Specialty, MedicalCase, sampleCases } from '../data/medicalData';
+import {
+  Specialty,
+  MedicalCase,
+  generateCasesForSpecialty,
+} from '../data/medicalData';
 
 interface CasesListProps {
   specialty: Specialty;
@@ -11,18 +15,8 @@ export function CasesList({
   onCaseSelect,
   completedCases,
 }: CasesListProps) {
-  // Generate sample cases for the specialty
-  const cases = Array.from({ length: specialty.casesCount }, (_, index) => ({
-    ...sampleCases[0],
-    id: `${specialty.id}-case-${index + 1}`,
-    specialtyId: specialty.id,
-    title: `Case ${index + 1}: ${sampleCases[0].title}`,
-    titleAr: `الحالة ${index + 1}: ${sampleCases[0].titleAr}`,
-    difficulty: ['beginner', 'intermediate', 'advanced'][index % 3] as
-      | 'beginner'
-      | 'intermediate'
-      | 'advanced',
-  }));
+  // Get authentic medical cases for the specialty
+  const cases = generateCasesForSpecialty(specialty);
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
