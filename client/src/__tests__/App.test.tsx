@@ -1,66 +1,52 @@
-import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
 import App from '../App';
 
-// Define types
-type ApiResponse = {
-  message: string;
-};
-
-// Mock the fetch API
-globalThis.fetch = vi.fn() as unknown as typeof fetch;
-
-function mockFetchResponse(data: ApiResponse) {
-  return {
-    json: vi.fn().mockResolvedValue(data),
-    ok: true,
-  };
-}
-
-describe('App Component', () => {
+describe('Cases Bank App', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Default mock implementation
-    (globalThis.fetch as unknown as Mock).mockResolvedValue(
-      mockFetchResponse({ message: 'Test Message from API' })
-    );
   });
 
-  it('renders App component correctly', () => {
+  it('renders Cases Bank home page correctly', () => {
     render(<App />);
-    expect(screen.getByText('Mentat Template JS')).toBeInTheDocument();
-    expect(screen.getByText(/Frontend: React, Vite/)).toBeInTheDocument();
-    expect(screen.getByText(/Backend: Node.js, Express/)).toBeInTheDocument();
+
+    // Check for main title
+    expect(screen.getByText('Cases Bank')).toBeInTheDocument();
+
+    // Check for search functionality
     expect(
-      screen.getByText(/Utilities: Typescript, ESLint, Prettier/)
+      screen.getByPlaceholderText('ابحث في التخصصات الطبية...')
     ).toBeInTheDocument();
+
+    // Check for progress tracker
+    expect(screen.getByText('تقدمك في التعلم')).toBeInTheDocument();
+    expect(screen.getByText('0 / 1500')).toBeInTheDocument();
   });
 
-  it('loads and displays API message', async () => {
+  it('displays medical specialties correctly', () => {
     render(<App />);
 
-    // Should initially show loading message
-    expect(screen.getByText(/Loading message from server/)).toBeInTheDocument();
-
-    // Wait for the fetch to resolve and check if the message is displayed
-    await waitFor(() => {
-      expect(screen.getByText('Test Message from API')).toBeInTheDocument();
-    });
-
-    expect(globalThis.fetch).toHaveBeenCalledWith('/api');
+    // Check for some key medical specialties
+    expect(screen.getByText('الباطنة العامة')).toBeInTheDocument();
+    expect(screen.getByText('Internal Medicine')).toBeInTheDocument();
+    expect(screen.getByText('الجراحة العامة')).toBeInTheDocument();
+    expect(screen.getByText('General Surgery')).toBeInTheDocument();
+    expect(screen.getByText('طب الأطفال')).toBeInTheDocument();
+    expect(screen.getByText('Pediatrics')).toBeInTheDocument();
   });
 
-  it('handles API error', async () => {
-    // Mock a failed API call
-    (globalThis.fetch as unknown as Mock).mockRejectedValue(
-      new Error('API Error')
+  it('allows searching through specialties', () => {
+    render(<App />);
+
+    const searchInput = screen.getByPlaceholderText(
+      'ابحث في التخصصات الطبية...'
     );
 
-    render(<App />);
+    // Search for cardiology
+    fireEvent.change(searchInput, { target: { value: 'cardiology' } });
 
-    // Wait for the error message to appear
-    await waitFor(() => {
-      expect(screen.getByText(/Error: API Error/)).toBeInTheDocument();
-    });
+    // Should still show cardiology specialty
+    expect(screen.getByText('أمراض القلب')).toBeInTheDocument();
+    expect(screen.getByText('Cardiology')).toBeInTheDocument();
   });
 });

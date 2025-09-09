@@ -1,152 +1,108 @@
-import { useState, useEffect } from 'react';
-import mentatLogo from '/mentat.png';
+import { useState } from 'react';
+import { Header } from './components/Header';
+import { SpecialtiesGrid } from './components/SpecialtiesGrid';
+import { CasesList } from './components/CasesList';
+import { CaseViewer } from './components/CaseViewer';
+import { SearchBar } from './components/SearchBar';
+import { ProgressTracker } from './components/ProgressTracker';
+import {
+  medicalSpecialties,
+  type MedicalCase,
+  type Specialty,
+} from './data/medicalData';
+
+type ViewMode = 'home' | 'specialty' | 'case';
 
 function App() {
-  const [message, setMessage] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [currentView, setCurrentView] = useState<ViewMode>('home');
+  const [selectedSpecialty, setSelectedSpecialty] = useState<Specialty | null>(
+    null
+  );
+  const [selectedCase, setSelectedCase] = useState<MedicalCase | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [completedCases, setCompletedCases] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    const fetchBackendMessage = async () => {
-      setLoading(true);
-      setError(null);
+  const handleSpecialtySelect = (specialty: Specialty) => {
+    setSelectedSpecialty(specialty);
+    setCurrentView('specialty');
+  };
 
-      try {
-        const response = await fetch('/api');
+  const handleCaseSelect = (medicalCase: MedicalCase) => {
+    setSelectedCase(medicalCase);
+    setCurrentView('case');
+  };
 
-        if (!response.ok) {
-          throw new Error(`HTTP error ${response.status}`);
-        }
+  const handleBackToHome = () => {
+    setCurrentView('home');
+    setSelectedSpecialty(null);
+    setSelectedCase(null);
+    setSearchQuery('');
+  };
 
-        const data = await response.json();
-        setMessage(data.message);
-      } catch (err) {
-        console.error('Error fetching data:', err);
-        setError(
-          err instanceof Error ? err.message : 'An unknown error occurred'
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
+  const handleBackToSpecialty = () => {
+    setCurrentView('specialty');
+    setSelectedCase(null);
+  };
 
-    fetchBackendMessage();
-  }, []);
+  const handleCaseComplete = (caseId: string) => {
+    setCompletedCases((prev) => new Set([...prev, caseId]));
+  };
+
+  const filteredSpecialties = medicalSpecialties.filter(
+    (specialty) =>
+      specialty.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      specialty.nameAr.includes(searchQuery)
+  );
 
   return (
-    <div
-      style={{
-        backgroundColor: '#fafafa',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        height: '100vh',
-        width: '100vw',
-        justifyContent: 'center',
-        padding: '20px',
-        fontFamily:
-          '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-      }}
-    >
-      {/* Logo */}
-      <div>
-        <a href="https://mentat.ai" target="_blank">
-          <img src={mentatLogo} alt="Mentat Logo" />
-        </a>
-      </div>
+    <div className="app">
+      <Header
+        onBackClick={
+          currentView === 'specialty'
+            ? handleBackToHome
+            : currentView === 'case'
+              ? handleBackToSpecialty
+              : undefined
+        }
+        title={
+          currentView === 'home'
+            ? 'Cases Bank'
+            : currentView === 'specialty'
+              ? selectedSpecialty?.name || ''
+              : selectedCase?.title || ''
+        }
+      />
 
-      {/* Main content */}
-      <div
-        className="paper"
-        style={{
-          maxWidth: '500px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '24px',
-        }}
-      >
-        <h1>Mentat Template JS</h1>
+      {currentView === 'home' && (
+        <>
+          <SearchBar
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="ابحث في التخصصات الطبية..."
+          />
+          <ProgressTracker completedCases={completedCases.size} />
+          <SpecialtiesGrid
+            specialties={filteredSpecialties}
+            onSpecialtySelect={handleSpecialtySelect}
+          />
+        </>
+      )}
 
-        {/* Tech stack */}
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'row',
-            gap: '12px',
-            marginBottom: '24px',
-          }}
-        >
-          {[
-            ['Frontend', 'React, Vite, Vitest'],
-            ['Backend', 'Node.js, Express, Jest'],
-            ['Utilities', 'TypeScript, ESLint, Prettier'],
-          ].map(([title, techs]) => (
-            <div className="section" style={{ textAlign: 'center' }} key={title}>
-              <div
-                style={{
-                  fontWeight: '500',
-                  fontSize: '14px',
-                  color: '#1f2937',
-                  marginBottom: '4px',
-                }}
-              >
-                {title}
-              </div>
-              <div style={{ fontSize: '12px', color: '#6b7280' }}>{techs}</div>
-            </div>
-          ))}
-        </div>
+      {currentView === 'specialty' && selectedSpecialty && (
+        <CasesList
+          specialty={selectedSpecialty}
+          onCaseSelect={handleCaseSelect}
+          completedCases={completedCases}
+        />
+      )}
 
-        {/* Server message */}
-        <div className="section">
-          <div
-            style={{
-              fontSize: '14px',
-              fontWeight: '500',
-              color: '#1f2937',
-              marginBottom: '8px',
-            }}
-          >
-            Message from server:
-          </div>
-          <div style={{ fontSize: '14px', color: '#1f2937' }}>
-            {loading ? (
-              'Loading message from server...'
-            ) : error ? (
-              <span style={{ color: '#dc2626' }}>Error: {error}</span>
-            ) : message ? (
-              message
-            ) : (
-              <span style={{ color: '#6b7280', fontStyle: 'italic' }}>
-                No message from server
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Call to action */}
-        <div
-          style={{
-            textAlign: 'center',
-            fontSize: '14px',
-            color: '#6b7280',
-          }}
-        >
-          Create a new GitHub issue and tag{' '}
-          <code
-            style={{
-              backgroundColor: '#f8fafc',
-              padding: '2px 6px',
-              borderRadius: '4px',
-              fontSize: '13px',
-              color: '#1f2937',
-            }}
-          >
-            @MentatBot
-          </code>{' '}
-          to get started.
-        </div>
-      </div>
+      {currentView === 'case' && selectedCase && (
+        <CaseViewer
+          case={selectedCase}
+          onComplete={handleCaseComplete}
+          isCompleted={completedCases.has(selectedCase.id)}
+        />
+      )}
     </div>
   );
 }
